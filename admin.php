@@ -23,7 +23,7 @@ if (isset($_POST['add_contestant'])) {
         $query = "INSERT INTO contestants (name, about_contestant, profile_picture, votes) 
                   VALUES ('$name', '$about', '$profile_picture', 0)";
         if (mysqli_query($conn, $query)) {
-            echo "<script>alert('Contestant added successfully!');</script>";
+            echo "<script>alert('Contestant added successfully!'); window.location.href = 'admin.php';</script>";
         } else {
             echo "<script>alert('Error adding contestant: " . mysqli_error($conn) . "');</script>";
         }
@@ -31,6 +31,47 @@ if (isset($_POST['add_contestant'])) {
         echo "<script>alert('Please enter a contestant name!');</script>";
     }
 }
+
+// Handle deletion of a contestant
+if (isset($_POST['delete_contestant'])) {
+    $contestant_id = $_POST['contestant_id'];
+
+    // First, delete the contestant's profile picture from the server
+    $result = mysqli_query($conn, "SELECT profile_picture FROM contestants WHERE id = $contestant_id");
+    $contestant = mysqli_fetch_assoc($result);
+    $profile_picture = $contestant['profile_picture'];
+    
+    if ($profile_picture && file_exists("uploads/" . $profile_picture)) {
+        unlink("uploads/" . $profile_picture); // Delete the file from the server
+    }
+
+    // Then, delete the contestant from the database
+    $delete_query = "DELETE FROM contestants WHERE id = $contestant_id";
+    
+    if (mysqli_query($conn, $delete_query)) {
+        echo "<script>alert('Contestant deleted successfully!'); window.location.href = 'admin.php';</script>";
+    } else {
+        echo "<script>alert('Error deleting contestant: " . mysqli_error($conn) . "');</script>";
+    }
+}
+
+
+// Fetch contestant details if 'edit_contestant' is set
+if (isset($_POST['edit_contestant'])) {
+    $contestant_id = $_POST['contestant_id'];
+    $result = mysqli_query($conn, "SELECT * FROM contestants WHERE id = $contestant_id");
+    $contestant_data = mysqli_fetch_assoc($result);
+
+    // Check if contestant data is fetched successfully
+    if ($contestant_data) {
+        $contestant_name = $contestant_data['name'];
+        $about_contestant = $contestant_data['about_contestant'];
+        $profile_picture = $contestant_data['profile_picture'];
+    }
+}
+
+
+
 
 // Fetch all contestants
 $contestants = mysqli_query($conn, "SELECT * FROM contestants");
@@ -40,19 +81,18 @@ $payments = mysqli_query($conn, "SELECT payments.*, contestants.name FROM paymen
                                  JOIN contestants ON payments.contestant_id = contestants.id 
                                  WHERE payments.status = 'pending'");
 
-// Handle payment confirmation
 if (isset($_POST['confirm_payment'])) {
     $payment_id = $_POST['payment_id'];
-    $amount = $_POST['amount'];
+    $amount = $_POST['amount']; // Get the amount input from the form
 
-    // Ensure the payment hasn't already been confirmed
+    // Fetch the payment data from the database
     $payment_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM payments WHERE id = $payment_id"));
-    
+
     if ($payment_data['status'] == 'pending') {
         // Update payment status to confirmed
         mysqli_query($conn, "UPDATE payments SET status = 'confirmed' WHERE id = $payment_id");
 
-        // Calculate votes to be added
+        // Calculate votes to be added (assuming 1 vote = 100 units of amount)
         $votes = $amount / 100;
 
         // Update contestant's vote count
@@ -67,7 +107,53 @@ if (isset($_POST['confirm_payment'])) {
 }
 
 
+
 ?>
+
+
+<?php
+// Handle updating contestant details
+if (isset($_POST['update_contestant'])) {
+    $contestant_id = $_POST['contestant_id'];
+    $name = $_POST['contestant_name'];
+    $about = $_POST['about_contestant'];
+    $profile_picture = $_FILES['profile_picture']['name'];
+    $profile_picture_tmp = $_FILES['profile_picture']['tmp_name'];
+
+    // If a new profile picture is uploaded
+    if (!empty($profile_picture)) {
+        // Delete the old profile picture
+        $old_picture_query = mysqli_query($conn, "SELECT profile_picture FROM contestants WHERE id = $contestant_id");
+        $old_picture = mysqli_fetch_assoc($old_picture_query)['profile_picture'];
+        if ($old_picture && file_exists("uploads/" . $old_picture)) {
+            unlink("uploads/" . $old_picture); // Delete the old file
+        }
+
+        // Upload the new profile picture
+        $target_dir = "uploads/";
+        $target_file = $target_dir . basename($profile_picture);
+        if (move_uploaded_file($profile_picture_tmp, $target_file)) {
+            echo "Profile picture uploaded successfully.";
+        } else {
+            echo "Error uploading profile picture.";
+        }
+
+        // Update contestant with the new profile picture
+        $update_query = "UPDATE contestants SET name = '$name', about_contestant = '$about', profile_picture = '$profile_picture' WHERE id = $contestant_id";
+    } else {
+        // Update contestant without changing the profile picture
+        $update_query = "UPDATE contestants SET name = '$name', about_contestant = '$about' WHERE id = $contestant_id";
+    }
+
+    // Execute the update query
+    if (mysqli_query($conn, $update_query)) {
+        echo "<script>alert('Contestant updated successfully!'); window.location.href = 'admin.php';</script>";
+    } else {
+        echo "<script>alert('Error updating contestant: " . mysqli_error($conn) . "');</script>";
+    }
+}
+?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -120,6 +206,13 @@ if (isset($_POST['confirm_payment'])) {
         button:hover {
             background-color: #218838;
         }
+        .danger{
+            padding: 10px 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer; 
+        }
 
         @media (max-width: 768px) {
             .container {
@@ -153,25 +246,62 @@ if (isset($_POST['confirm_payment'])) {
             
             <button type="submit" name="add_contestant">Add Contestant</button>
         </form>
+        
+        <!-- Check if $contestant_data is available and display the edit form -->
+<?php if (isset($contestant_data)) { ?>
+    <h2>Edit Contestant</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="contestant_id" value="<?php echo $contestant_id; ?>">
+        
+        <label>Contestant Name:</label>
+        <input type="text" name="contestant_name" value="<?php echo $contestant_name; ?>" required>
+        
+        <label>About Contestant:</label>
+        <textarea name="about_contestant" required><?php echo $about_contestant; ?></textarea>
+        
+        <label>Profile Picture:</label>
+        <img src="uploads/<?php echo $profile_picture; ?>" alt="Profile Picture" width="100">
+        <input type="file" name="profile_picture" accept="image/*">
+        
+        <button type="submit" name="update_contestant">Update Contestant</button>
+    </form>
+<?php } ?>
 
-        <!-- Contestants Table -->
-        <h2>Contestants</h2>
-        <table>
-            <tr>
-                <th>Profile Picture</th>
-                <th>Name</th>
-                <th>Votes</th>
-                <th>About</th>
-            </tr>
-            <?php while ($row = mysqli_fetch_assoc($contestants)) { ?>
-                <tr>
-                    <td><img src="uploads/<?php echo $row['profile_picture']; ?>" alt="<?php echo $row['name']; ?>"></td>
-                    <td><?php echo $row['name']; ?></td>
-                    <td><?php echo $row['votes']; ?></td>
-                    <td><?php echo $row['about_contestant']; ?></td>
-                </tr>
-            <?php } ?>
-        </table>
+      <!-- Contestants Table -->
+<h2>Contestants</h2>
+<table>
+    <tr>
+        <th>Profile Picture</th>
+        <th>Name</th>
+        <th>Votes</th>
+        <th>About</th>
+        <th>Actions</th> <!-- New column for action buttons -->
+    </tr>
+    <?php while ($row = mysqli_fetch_assoc($contestants)) { ?>
+        <tr>
+            <td><img src="uploads/<?php echo $row['profile_picture']; ?>" alt="<?php echo $row['name']; ?>"></td>
+            <td><?php echo $row['name']; ?></td>
+            <td><?php echo $row['votes']; ?></td>
+            <td><?php echo $row['about_contestant']; ?></td>
+            <td>
+                  <!-- Edit button -->
+                  <form method="POST" style="display:inline-block;">
+                    <input type="hidden" name="contestant_id" value="<?php echo $row['id']; ?>">
+                    <button type="submit" name="edit_contestant">Edit</button>
+                </form>
+
+                <!-- Delete button -->
+                <form method="POST" onsubmit="return confirm('Are you sure you want to delete this contestant?');" style="display:inline-block;">
+                    <input type="hidden" name="contestant_id" value="<?php echo $row['id']; ?>">
+                    <button type="submit" name="delete_contestant" class="danger">Delete</button>
+                </form>
+              
+            </td>
+        </tr>
+    <?php } ?>
+</table>
+
+
 
         <h2>Pending Payments</h2>
 <table>

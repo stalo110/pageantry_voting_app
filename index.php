@@ -2,7 +2,8 @@
 include 'db.php';
 
 // Fetch all contestants and their vote counts
-$contestants = mysqli_query($conn, "SELECT c.*, COALESCE(SUM(p.amount/100), 0) as votes FROM contestants c LEFT JOIN payments p ON c.id = p.contestant_id GROUP BY c.id");
+$contestants = mysqli_query($conn, "SELECT * FROM contestants");
+
 ?>
 
 <!DOCTYPE html>
@@ -23,6 +24,10 @@ $contestants = mysqli_query($conn, "SELECT c.*, COALESCE(SUM(p.amount/100), 0) a
             width: 80%;
             margin: 0 auto;
         }
+        .container1{
+            width: 50%;
+            margin: 0 auto;  
+        }
         h1, h2, h3 {
             color: #333;
         }
@@ -42,6 +47,9 @@ $contestants = mysqli_query($conn, "SELECT c.*, COALESCE(SUM(p.amount/100), 0) a
         .hero h1 {
             font-size: 48px;
             margin-top: 20px;
+        }
+        .hero p {
+            color: black
         }
 
         /* Buy Tickets Button */
@@ -136,13 +144,13 @@ $contestants = mysqli_query($conn, "SELECT c.*, COALESCE(SUM(p.amount/100), 0) a
 
     <!-- Hero Section -->
     <div class="hero">
-        <img src="logo.png" alt="Pageantry Logo"> <!-- Replace with your logo -->
+        <img src="images/bird.jpg" alt="Pageantry Logo"> <!-- Replace with your logo -->
         <h1>Welcome to Our Pageantry Contest</h1>
         <p>Vote for your favorite contestants and support their journey to victory!</p>
     </div>
 
     <!-- Buy Tickets Button -->
-    <div class="container">
+    <div class="container1">
         <a href="buy_tickets.php" class="buy-tickets">Buy Tickets</a>
     </div>
 
