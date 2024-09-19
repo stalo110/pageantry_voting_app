@@ -5,9 +5,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $query = "INSERT INTO users (email, password) VALUES ('$email', '$password')";
+    // Insert admin into the admin table
+    $query = "INSERT INTO admin (email, password) VALUES ('$email', '$password')";
     if (mysqli_query($conn, $query)) {
-        header('Location: login.php');
+        header('Location: admin_login.php');
     } else {
         echo "Error: " . $query . "<br>" . mysqli_error($conn);
     }
@@ -17,9 +18,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sign Up</title>
+    <title>Admin Signup</title>
     <style>
-        /* Similar styling as login page */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -51,13 +51,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="signup-container">
-        <h1>Sign Up</h1>
+        <h1>Admin Signup</h1>
         <form method="POST">
             <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Sign Up</button>
         </form>
-        <p>Already have an account? <a href="login.php">Login</a></p>
     </div>
 </body>
 </html>

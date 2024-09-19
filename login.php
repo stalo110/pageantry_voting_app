@@ -6,13 +6,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Check user credentials
-    $query = "SELECT * FROM users WHERE email = '$email' AND password = '$password'";
+    // Check admin credentials
+    $query = "SELECT * FROM admin WHERE email = '$email' AND password = '$password'";
     $result = mysqli_query($conn, $query);
 
     if (mysqli_num_rows($result) == 1) {
-        $_SESSION['email'] = $email;
-        header('Location: vote.php');
+        $_SESSION['admin_email'] = $email;
+        header('Location: admin.php');
         exit();
     } else {
         echo "Invalid email or password!";
@@ -23,9 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Admin Login</title>
     <style>
-        /* Basic styling */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -57,13 +56,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="login-container">
-        <h1>Login</h1>
+        <h1>Admin Login</h1>
         <form method="POST">
             <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
-        <p>Don't have an account? <a href="signup.php">Sign Up</a></p>
     </div>
 </body>
 </html>
