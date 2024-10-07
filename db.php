@@ -1,8 +1,13 @@
 <?php
+// $servername = "localhost";
+// $username = "root";
+// $password = "";
+// $dbname = "voting";
+
 $servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "voting";
+$username = "zamsigna_user";
+$password = "&AqPu64D,F]W";
+$dbname = "zamsigna_database";
 
 // Create connection
 $conn = mysqli_connect($servername, $username, $password, $dbname);

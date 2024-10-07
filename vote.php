@@ -10,6 +10,16 @@ if (isset($_GET['contestant_id'])) {
     $result = mysqli_query($conn, $query);
     $contestant = mysqli_fetch_assoc($result);
 }
+
+
+if (isset($_POST['vote'])) {
+    $contestant_id = $_POST['contestant_id'];
+
+    // Fetch contestant details
+    $query = "SELECT * FROM contestants WHERE id = $contestant_id";
+    $result = mysqli_query($conn, $query);
+    $contestant = mysqli_fetch_assoc($result);
+}
 ?>
 
 <!DOCTYPE html>
@@ -40,6 +50,14 @@ if (isset($_GET['contestant_id'])) {
         .vote-section {
             margin-top: 30px;
         }
+        .bank-details {
+            margin-top: 30px;
+            font-size: 18px;
+        }
+         h4{
+            color: green;
+            font-weight:600;
+        }
         button {
             padding: 10px 20px;
             background-color: #28a745;
@@ -62,9 +80,33 @@ if (isset($_GET['contestant_id'])) {
         <div class="vote-section">
             <form method="POST" action="vote_payment.php">
                 <input type="hidden" name="contestant_id" value="<?php echo $contestant['id']; ?>">
-                <button type="submit" name="vote">Vote</button>
+                <!-- <button type="submit" name="vote">Vote</button> -->
             </form>
         </div>
     </div>
+
+    <div class="container">
+        <h1>Payment for <?php echo $contestant['name']; ?></h1>
+        
+        <!-- Bank Details -->
+        <div class="bank-details">
+
+            <h2>To vote via bank transfer</h2>
+            <h4>Step 1:</h4>
+            <p>Transfer the amount (N100/Vote) to</p>
+            <p><strong>Bank:</strong> Moniepoint Bank</p>
+            <p><strong>Account Name:</strong> Uhiara Stephen CHINAZA</p>
+            <p><strong>Account Number:</strong> 8138635693</p>
+        </div>
+        <h4>Step 2:</h4>
+        <p>Your votes wil be allocated automatically to the contestant immediately after confirming your payment.</p>
+
+        <!-- Final Vote Button -->
+        <form method="POST" action="process_vote.php">
+            <input type="hidden" name="contestant_id" value="<?php echo $contestant['id']; ?>">
+            <button type="submit" name="vote_now">Vote Now</button>
+        </form>
+    </div>
+
 </body>
 </html>

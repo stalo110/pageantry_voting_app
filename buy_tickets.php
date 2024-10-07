@@ -2,19 +2,23 @@
 include 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $phone = $_POST['phone'];
+    $name = mysqli_real_escape_string($conn, $_POST['name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $phone = mysqli_real_escape_string($conn, $_POST['phone']);
 
-    // Save ticket purchase data into the database
+    // Save ticket purchase data into the database with pending status
     $query = "INSERT INTO tickets (name, email, phone, status) VALUES ('$name', '$email', '$phone', 'pending')";
+    
     if (mysqli_query($conn, $query)) {
+        // No email is sent here. The user will be notified when admin confirms the payment.
         echo "<script>alert('Ticket purchase request sent! Please wait for admin confirmation.'); window.location.href = 'index.php';</script>";
     } else {
-        echo "<script>alert('Error processing your request: " . mysqli_error($conn) . "');</script>";
+        echo "<script>alert('Error inserting into database: " . mysqli_error($conn) . "');</script>";
     }
 }
 ?>
+
+
 
 
 <!DOCTYPE html>
@@ -57,9 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="phone" required>
 
             <h3>Admin Bank Details</h3>
-            <p>Bank: XYZ Bank</p>
-            <p>Account Name: Admin Name</p>
-            <p>Account Number: 1234567890</p>
+            <p><strong>Bank:</strong> Moniepoint Bank</p>
+            <p><strong>Account Name:</strong> Uhiara Stephen CHINAZA</p>
+            <p><strong>Account Number:</strong> 8138635693</p>
 
             <button type="submit">Buy Ticket Now</button>
         </form>

@@ -327,6 +327,7 @@ if (isset($_POST['update_contestant'])) {
     <?php } ?>
 </table>
 
+
 <h2>Pending Ticket Purchases</h2>
 <table>
     <tr>
@@ -336,6 +337,7 @@ if (isset($_POST['update_contestant'])) {
         <th>Confirm</th>
     </tr>
     <?php 
+    // Fetch pending ticket purchases
     $pending_tickets = mysqli_query($conn, "SELECT * FROM tickets WHERE status = 'pending'");
     while ($ticket = mysqli_fetch_assoc($pending_tickets)) { ?>
         <tr>
@@ -343,6 +345,7 @@ if (isset($_POST['update_contestant'])) {
             <td><?php echo $ticket['email']; ?></td>
             <td><?php echo $ticket['phone']; ?></td>
             <td>
+                <!-- Form to confirm ticket -->
                 <form method="POST">
                     <input type="hidden" name="ticket_id" value="<?php echo $ticket['id']; ?>">
                     <button type="submit" name="confirm_ticket">Confirm Ticket</button>
@@ -353,30 +356,96 @@ if (isset($_POST['update_contestant'])) {
 </table>
 
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require './PHPMailer/src/Exception.php';
+require './PHPMailer/src/PHPMailer.php';
+require './PHPMailer/src/SMTP.php';
+
 // Handle ticket confirmation
 if (isset($_POST['confirm_ticket'])) {
     $ticket_id = $_POST['ticket_id'];
 
-    // Generate a unique ticket ID
+    // Generate a unique ticket code
     $ticket_code = strtoupper(uniqid('TICKET'));
 
     // Update the ticket status and add the ticket code
-    mysqli_query($conn, "UPDATE tickets SET status = 'confirmed', ticket_code = '$ticket_code' WHERE id = $ticket_id");
+    $update_query = "UPDATE tickets SET status = 'confirmed', ticket_code = '$ticket_code' WHERE id = $ticket_id";
+    if (mysqli_query($conn, $update_query)) {
 
-    // Get the user's email
-    $ticket_data = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM tickets WHERE id = $ticket_id"));
-    $email = $ticket_data['email'];
+        // Fetch the user's email and name
+        $ticket_data_query = "SELECT * FROM tickets WHERE id = $ticket_id";
+        $ticket_data = mysqli_fetch_assoc(mysqli_query($conn, $ticket_data_query));
+        $email = $ticket_data['email'];
+        $name = $ticket_data['name'];
 
-    // Send the ticket ID to the user's email
-    $subject = "Your Ticket for the Event";
-    $message = "Thank you for purchasing a ticket! Your ticket ID is: $ticket_code";
-    $headers = "From: noreply@pageantry.com";
+        // Send the ticket code via email using PHPMailer
+        $mail = new PHPMailer(true);
 
-    mail($email, $subject, $message, $headers);
+        try {
+            // Server settings
+            $mail->isSMTP();
+            $mail->Host = 'mail.zamsignatures.com.ng'; // Set the SMTP server to send through
+            $mail->SMTPAuth = true;
+            $mail->Username = 'contact@zamsignatures.com.ng'; // SMTP username
+            $mail->Password = '{*v1DAM@dF=1'; // SMTP password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Enable SSL encryption
+            $mail->Port = 465; // TCP port to connect to
 
-    echo "<script>alert('Ticket confirmed, and email sent!'); window.location.href = 'admin.php';</script>";
-}
-?>
+            // Recipients
+            $mail->setFrom('contact@zamsignatures.com.ng', 'Zam Signatures');
+            $mail->addAddress($email); // Add the recipient email
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = 'Your Ticket for the Event';
+            $mail->Body = "
+                <html>
+                <head>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            color: #333;
+                        }
+                        h2 {
+                            color: #0044cc;
+                        }
+                        .content {
+                            background-color: #f9f9f9;
+                            padding: 20px;
+                            border-radius: 5px;
+                        }
+                        .footer {
+                            margin-top: 20px;
+                            font-size: 12px;
+                            color: #777;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class='content'>
+                 <img src='https://zamsignatures.com.ng/images/logo.jpg' alt='Logo'>
+                        <h2>Hello $name,</h2>
+                        <p>
+                            Thank you for purchasing a ticket for the event. Your ticket ID is <strong>$ticket_code</strong>.
+                        </p>
+                        <p>We look forward to seeing you at the event!</p>
+                    </div>
+                    <div class='footer'>
+                        <p>This is an automated message, please do
+                        not reply to this email. If you have any questions, contact us at support@pageantry.com.</p> </div> </body> </html> ";
+
+                        $mail->send();
+                        echo "<script>alert('Ticket confirmed, and email sent!'); window.location.href = 'admin.php';</script>";
+                    } catch (Exception $e) {
+                        echo "<script>alert('Ticket confirmed, but email could not be sent. Error: {$mail->ErrorInfo}'); window.location.href = 'admin.php';</script>";
+                    }
+                
+                } else {
+                    echo "<script>alert('Error confirming ticket: " . mysqli_error($conn) . "'); window.location.href = 'admin.php';</script>";
+                }
+            } ?>                
 
 
     </div>
