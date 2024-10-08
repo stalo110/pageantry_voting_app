@@ -334,6 +334,7 @@ if (isset($_POST['update_contestant'])) {
         <th>Name</th>
         <th>Email</th>
         <th>Phone</th>
+        <th>Amount Paid</th>
         <th>Confirm</th>
     </tr>
     <?php 
@@ -345,15 +346,19 @@ if (isset($_POST['update_contestant'])) {
             <td><?php echo $ticket['email']; ?></td>
             <td><?php echo $ticket['phone']; ?></td>
             <td>
-                <!-- Form to confirm ticket -->
+                <!-- Input for amount -->
                 <form method="POST">
                     <input type="hidden" name="ticket_id" value="<?php echo $ticket['id']; ?>">
+                    <input type="text" name="amount_paid" placeholder="Enter amount">
+            </td>
+            <td>
                     <button type="submit" name="confirm_ticket">Confirm Ticket</button>
                 </form>
             </td>
         </tr>
     <?php } ?>
 </table>
+
 
 <?php
 use PHPMailer\PHPMailer\PHPMailer;
@@ -366,36 +371,54 @@ require './PHPMailer/src/SMTP.php';
 // Handle ticket confirmation
 if (isset($_POST['confirm_ticket'])) {
     $ticket_id = $_POST['ticket_id'];
+    $amount_paid = $_POST['amount_paid'];
+
+    // Sanitize input and convert to a numerical value (remove 'k' if entered)
+    $amount_paid = str_replace('k', '000', strtolower($amount_paid)); 
+    $amount_paid = (int) $amount_paid;
+
+    // Determine policy based on amount
+    if ($amount_paid >= 100000) {
+        $policy = 'Odogwu';
+    } elseif ($amount_paid >= 50000) {
+        $policy = 'Golden';
+    } elseif ($amount_paid >= 20000) {
+        $policy = 'Silver';
+    } elseif ($amount_paid >= 2000) {
+        $policy = 'Regular';
+    } else {
+        $policy = 'Unknown'; // Or handle invalid inputs
+    }
 
     // Generate a unique ticket code
     $ticket_code = strtoupper(uniqid('TICKET'));
 
-    // Update the ticket status and add the ticket code
-    $update_query = "UPDATE tickets SET status = 'confirmed', ticket_code = '$ticket_code' WHERE id = $ticket_id";
-    if (mysqli_query($conn, $update_query)) {
+    // Update the ticket status, amount_paid, policy, and ticket code
+    $update_query = "UPDATE tickets SET status = 'confirmed', ticket_code = '$ticket_code', amount_paid = $amount_paid, policy = '$policy' WHERE id = $ticket_id";
 
+    if (mysqli_query($conn, $update_query)) {
         // Fetch the user's email and name
         $ticket_data_query = "SELECT * FROM tickets WHERE id = $ticket_id";
         $ticket_data = mysqli_fetch_assoc(mysqli_query($conn, $ticket_data_query));
         $email = $ticket_data['email'];
         $name = $ticket_data['name'];
 
-        // Send the ticket code via email using PHPMailer
+        // Send the ticket code via email
         $mail = new PHPMailer(true);
 
         try {
             // Server settings
             $mail->isSMTP();
-            $mail->Host = 'mail.zamsignatures.com.ng'; // Set the SMTP server to send through
+            $mail->Host = 'mail.zamsignatures.com.ng'; 
             $mail->SMTPAuth = true;
-            $mail->Username = 'contact@zamsignatures.com.ng'; // SMTP username
-            $mail->Password = '{*v1DAM@dF=1'; // SMTP password
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // Enable SSL encryption
-            $mail->Port = 465; // TCP port to connect to
+            $mail->Username = 'contact@zamsignatures.com.ng'; 
+            $mail->Password = '{*v1DAM@dF=1'; 
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; 
+            $mail->Port = 465; 
 
             // Recipients
             $mail->setFrom('contact@zamsignatures.com.ng', 'Zam Signatures');
-            $mail->addAddress($email); // Add the recipient email
+            $mail->addAddress($email); 
 
             // Content
             $mail->isHTML(true);
@@ -425,29 +448,33 @@ if (isset($_POST['confirm_ticket'])) {
                 </head>
                 <body>
                     <div class='content'>
-                 <img src='https://zamsignatures.com.ng/images/logo.jpg' alt='Logo'>
+                        <img src='https://zamsignatures.com.ng/images/logo.jpg' alt='Logo'>
                         <h2>Hello $name,</h2>
                         <p>
-                            Thank you for purchasing a ticket for the event. Your ticket ID is <strong>$ticket_code</strong>.
+                            Thank you for purchasing a ticket for the event. Your ticket ID is <strong>$ticket_code</strong>.<br>
+                            You have been assigned to the <strong>$policy</strong> table.
                         </p>
                         <p>We look forward to seeing you at the event!</p>
                     </div>
                     <div class='footer'>
-                        <p>This is an automated message, please do
-                        not reply to this email. If you have any questions, contact us at support@pageantry.com.</p> </div> </body> </html> ";
+                        <p>This is an automated message, please do not reply to this email. If you have any questions, contact us at support@pageantry.com.</p>
+                    </div>
+                </body>
+                </html>";
 
-                        $mail->send();
-                        echo "<script>alert('Ticket confirmed, and email sent!'); window.location.href = 'admin.php';</script>";
-                    } catch (Exception $e) {
-                        echo "<script>alert('Ticket confirmed, but email could not be sent. Error: {$mail->ErrorInfo}'); window.location.href = 'admin.php';</script>";
-                    }
-                
-                } else {
-                    echo "<script>alert('Error confirming ticket: " . mysqli_error($conn) . "'); window.location.href = 'admin.php';</script>";
-                }
-            } ?>                
+            $mail->send();
+            echo "<script>alert('Ticket confirmed, and email sent!'); window.location.href = 'admin.php';</script>";
+        } catch (Exception $e) {
+            echo "<script>alert('Ticket confirmed, but email could not be sent. Error: {$mail->ErrorInfo}'); window.location.href = 'admin.php';</script>";
+        }
+    } else {
+        echo "<script>alert('Error confirming ticket: " . mysqli_error($conn) . "'); window.location.href = 'admin.php';</script>";
+    }
+}?>
 
 
     </div>
 </body>
 </html>
+
+

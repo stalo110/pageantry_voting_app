@@ -60,6 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Phone Number:</label>
             <input type="text" name="phone" required>
 
+            <h4>Note: 2k means Regular ticket, 20k means Silver ticket, 50k means Golden ticket and 100k+ means Odogwu ticket.</h4>
+            <h4>Make payments to the account details below and click on the Buy Tickts Now button, Once Admin confirms yout payment, an email will be sent to you.</h4>
+
             <h3>Admin Bank Details</h3>
             <p><strong>Bank:</strong> Moniepoint Bank</p>
             <p><strong>Account Name:</strong> Uhiara Stephen CHINAZA</p>

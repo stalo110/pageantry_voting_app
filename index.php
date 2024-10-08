@@ -256,7 +256,7 @@ $contestants = mysqli_query($conn, "SELECT * FROM contestants");
                 <li>100k</li>
                 <li>50k</li>
                 <li>20k</li>
-                <li>1k</li>
+                <li>2k</li>
             </ul>
         </p>
         </div>

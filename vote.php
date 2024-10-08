@@ -35,14 +35,18 @@ if (isset($_POST['vote'])) {
             width: 50%;
             margin: 0 auto;
             text-align: center;
+            
         }
         .contestant {
             margin-top: 20px;
+            height: auto;
+            width: 100%;
         }
         .contestant img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
+            width: 300px;
+            border-radius: 20%;
+            height: auto;
+            object-fit: cover;
         }
         .contestant p {
             margin-top: 10px;
@@ -65,6 +69,16 @@ if (isset($_POST['vote'])) {
             border: none;
             cursor: pointer;
         }
+
+        @media screen and (max-width: 768px) {
+            .container{
+                width: 100%;
+                height: auto;
+            } 
+            .contestant{
+                width: 100%;
+            }
+            }
     </style>
 </head>
 <body>
